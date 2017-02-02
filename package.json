@@ -1,6 +1,6 @@
 {
   "name": "openstack-backup",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Backup files via openstack",
   "main": "index.js",
   "scripts": {
