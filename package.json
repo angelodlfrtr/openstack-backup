@@ -3,6 +3,12 @@
   "version": "0.0.1",
   "description": "Backup files via openstack",
   "main": "index.js",
+  "scripts": {
+    "patch-release": "npm version patch && npm publish && git push --follow-tags"
+  },
+  "bin": {
+    "openstack-backup": "./bin/openstack-backup"
+  },
   "dependencies": {
     "bluebird": "^3.4.7",
     "lodash": "^4.17.4",
