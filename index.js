@@ -85,12 +85,12 @@ module.exports = class OpenStackBackup {
       let archive_path = `${self.options.tmp_path}/${archive_name}`
       let command = [
         `cd ${path.dirname(self.backup_path)} &&`,
-        'tar -zcvf',
+        'tar -zcf',
         archive_path,
         path.basename(self.backup_path)
       ].join(' ')
 
-      exec(command, function(err, stdout, stderr) {
+      exec(command, { maxBuffer: 1024 * 500 }, function(err, stdout, stderr) {
         if (err) return reject(err)
         resolve(archive_path)
       })
