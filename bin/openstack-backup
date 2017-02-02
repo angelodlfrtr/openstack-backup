@@ -1,0 +1,30 @@
+#!/usr/bin/env node
+
+const argv = require('minimist')(process.argv.slice(2))
+const OpenStackBackup = require('../')
+
+if ( argv._.length < 1 ) throw 'invalid path'
+if ( !argv.name ) throw 'invalid name, use --name option'
+if ( !argv.container ) throw 'invalid container, use --container option'
+
+let backup_path = argv._[0]
+let name        = argv.name
+let options     = { openstack: {
+  container: argv.container
+}, verbose: true}
+
+if (argv.username)
+  options.openstack.username = argv.username
+
+if (argv.password)
+  options.openstack.password = argv.password
+
+if (argv.authurl)
+  options.openstack.authUrl = argv.authurl
+
+if (argv.region)
+  options.openstack.region = argv.region
+
+let klass = new OpenStackBackup(backup_path, name, options)
+
+klass.run()
