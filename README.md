@@ -8,4 +8,4 @@
 
 Run :
 
-`openstack-backup --username usernmae --password password --authurl authurl --container container_name --region region(optional) --name backup_name backup_dir`
+`openstack-backup --username usernmae --password password --authurl authurl --container container_name --region region(optional) --name backup_name --keep 3 backup_dir`

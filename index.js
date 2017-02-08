@@ -46,7 +46,7 @@ module.exports = class OpenStackBackup {
           write_stream.on('data', function(d) {
             downloaded   += d.length;
             let percents = Math.round(downloaded * 100 / archive_size)
-            process.stdout.write(`\r-- Downloading ${downloaded / 2} / ${archive_size} bytes -- ${percents / 2}%`)
+            process.stdout.write(`\r-- Downloading ${Math.round(downloaded / 2)} / ${Math.round(archive_size)} bytes -- ${Math.round(percents / 2)}%`)
           })
         }
 
@@ -60,12 +60,22 @@ module.exports = class OpenStackBackup {
           fs.unlink(archive_path, function(err) {
             if (err) return reject(err)
 
-            if (self.options.verbose) {
+            if (self.options.verbose)
               console.log('-- Archive removed')
-              console.log('-- All done :) !')
-            }
 
-            resolve(file)
+            if (self.options.verbose)
+              console.log('-- Clean old backups...')
+
+            self.cleanOldBackups().then(function(files_cleaned) {
+
+              if (self.options.verbose)
+                console.log(`-- ${files_cleaned.length} backups deleted`)
+
+              if (self.options.verbose)
+                console.log('-- All done :) !')
+
+              resolve(file)
+            }, reject)
           })
         })
 
@@ -93,6 +103,57 @@ module.exports = class OpenStackBackup {
       exec(command, { maxBuffer: 1024 * 500 }, function(err, stdout, stderr) {
         if (err) return reject(err)
         resolve(archive_path)
+      })
+    })
+  }
+
+  cleanOldBackups() {
+    let self = this
+
+    return new Promise(function(resolve, reject) {
+      let client = self.getOpenStackClient()
+
+      client.getFiles(self.options.openstack.container, function(err, files) {
+        if (err) return reject(err)
+
+        let backup_files    = []
+        let backups_deleted = []
+        let reg             = new RegExp(`^${self.name}-[0-9]*\.tar\.gz$`, 'g')
+
+        files.map(function(file) {
+          if (file.name.match(reg)) backup_files.push(file)
+        })
+
+        if (backup_files.length > self.options.keep_release) {
+
+          // Order backup files
+          backup_files.sort(function(a, b) {
+            if (a.name < b.name) return -1
+            if (a.name > b.name) return 1
+            return 0
+          })
+
+          backups_deleted = backup_files.slice((self.options.keep_release - 1), (backup_files.length - 1))
+          let promises    = []
+
+          backups_deleted.map(function(f) {
+            promises.push(new Promise(function(re, rj) {
+              client.removeFile(self.options.openstack.container, f, function(err, result) {
+                if (err) return reject(err)
+                if (self.options.verbose)
+                  console.log(`-- Backup ${f.name} deleted`)
+
+                re()
+              })
+            }))
+          })
+
+          Promise.all(promises).then(function() {
+            resolve(backups_deleted)
+          }, reject)
+        } else {
+          resolve(backups_deleted)
+        }
       })
     })
   }
@@ -132,6 +193,7 @@ module.exports = class OpenStackBackup {
     let base_opts = {
       tmp_path: '/tmp',
       verbose: false,
+      keep_release: 3,
       openstack: {
         provider: 'openstack',
         username: process.env.OPENSTACK_USERNAME,

@@ -13,6 +13,9 @@ let options     = { openstack: {
   container: argv.container
 }, verbose: true}
 
+if (argv.keep)
+  options.keep_release = parseInt(argv.keep)
+
 if (argv.username)
   options.openstack.username = argv.username
 
