@@ -128,12 +128,12 @@ module.exports = class OpenStackBackup {
 
           // Order backup files
           backup_files.sort(function(a, b) {
-            if (a.name < b.name) return -1
-            if (a.name > b.name) return 1
+            if (a.name < b.name) return 1
+            if (a.name > b.name) return -1
             return 0
           })
 
-          backups_deleted = backup_files.slice((self.options.keep_release - 1), (backup_files.length - 1))
+          backups_deleted = backup_files.slice((self.options.keep_release), (backup_files.length))
           let promises    = []
 
           backups_deleted.map(function(f) {
